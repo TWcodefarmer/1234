@@ -10,14 +10,14 @@ import keyboard
 # ========== 設定 ==========
 keyword = "Granado Espada M"
 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-target_color = (150, 50, 22)  # 血條顏色
-tolerance = 10  # 顏色容差，建議用 10 左右避免細微誤差
+target_color = (150, 50, 22)   # 血條顏色
+tolerance = 0   # 顏色容差，建議用 10 左右避免細微誤差
 
 # 血條終點座標（只看 x2, y）
 hp_bar_points = [
-    (955, 906),   # 角色1 結尾點
-    (1418, 906),  # 角色2
-    (1886, 906),  # 角色3
+    (955, 900),    # 角色1 結尾點
+    (1418, 900),  # 角色2
+    (1886, 900),  # 角色3
 ]
 
 def is_color_close(c1, c2, tolerance):
@@ -96,17 +96,12 @@ if __name__ == "__main__":
                             r, g, b = pixels[rel_x, rel_y]
                             actual_color = (r, g, b)
                             print(f"    [角色{idx+1}] 座標 ({x},{y}) 抓到顏色 {actual_color}")
-                            if is_color_close(actual_color, target_color, tolerance):
-                                print(f"        ↪ 血條顏色正常")
-                            else:
+                            if not is_color_close(actual_color, target_color, tolerance): # Changed logic here
                                 print(f"        ↪ 血條顏色異常！")
                                 need_press_h = True
-                                # Once one character's HP is low, we break and trigger 'H'
-                                # This ensures we don't waste time checking other characters in the same window
-                                break
+                                break # Once one character's HP is low, we break and trigger 'H'
                         else:
                             print(f"    [角色{idx+1}] 座標超出視窗範圍")
-                            # If a point is out of bounds, it might indicate a problem, treat as needing attention
                             need_press_h = True
                             break # If any point is out of bounds, we assume an issue and proceed to 'H'
 
@@ -114,10 +109,11 @@ if __name__ == "__main__":
                         print(f"    ↪ 視窗 '{win.title}' 偵測到血條異常，準備執行補血動作...")
                         if send_key_h(win): # Call send_key_h and check if it was successful
                             print(f"    ↪ 視窗 '{win.title}' 已執行補血動作，跳過此視窗，檢查下一個。")
-                            # **關鍵修改：執行補血後立即跳到下一個視窗**
-                            continue # This will immediately move to the next 'win' in the 'for' loop
+                        # No 'continue' here, as 'send_key_h' will lead to moving to the next window implicitly
+                        # once this window's processing is complete.
                     else:
-                        print("    ↪ 所有血條顏色正常，無需按鍵")
+                        print("    ↪ 所有血條顏色正常，無需按鍵，跳過此視窗，檢查下一個。")
+                        continue # This will immediately move to the next 'win' in the 'for' loop
 
             except Exception as e:
                 print(f"[!] 錯誤發生於視窗 {i+1}：{win.title}")
