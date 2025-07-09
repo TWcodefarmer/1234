@@ -1,3 +1,5 @@
+# 回程繼續版本
+
 import pygetwindow as gw
 import mss
 from PIL import Image
