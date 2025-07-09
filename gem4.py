@@ -25,37 +25,23 @@ def is_color_close(c1, c2, tolerance):
     return all(abs(a - b) <= tolerance for a, b in zip(c1, c2))
 
 def send_key_h(win):
-    """激活視窗 + 點擊 + 補血動作，加上適當延遲"""
+    """模擬點擊視窗中心並發送 h 鍵"""
     try:
-        # 1. 激活視窗（讓它前景）
-        win.activate()
-        time.sleep(0.5)  # 等待視窗跳出來
-
-        # 2. 滑鼠移動 + 點擊視窗中心
+        time.sleep(0.3)
         center_x = win.left + win.width // 2
         center_y = win.top + win.height // 2
-        pyautogui.moveTo(center_x, center_y)
-        time.sleep(0.2)
-        pyautogui.click()  # 點擊視窗讓它真的聚焦
-        print(f"    ↪ 點擊視窗中心 ({center_x}, {center_y})")
-        time.sleep(0.5)
-
-        # 3. 點擊補品或 UI 上某個固定點
-        pyautogui.click(150, 80)
-        print("    ↪ 點擊 (150, 80)")
-        time.sleep(0.5)
-
-        # 4. 點擊主要位置（如補品鍵）
-        pyautogui.click(1111, 750)
-        print("    ↪ 點擊 (1111, 750)")
-        time.sleep(0.5)
-        return True # 表示已執行 'H' 動作
+        pyautogui.click(center_x, center_y)  # 聚焦視窗
+        time.sleep(0.3)
+        keyboard.send('h')                   # 發送 h 鍵
+        print(f"    ↪ 視窗 '{win.title}' 發送按鍵 h")
+        time.sleep(0.3)
+        pyautogui.click(1111, 750)          # 你原本點擊的固定位置
     except Exception as e:
         print(f"    ↪ 發送按鍵失敗: {e}")
-        return False # 表示執行失敗
 
 if __name__ == "__main__":
-    while True:
+    running = True
+    while running:
         windows = [w for w in gw.getWindowsWithTitle(keyword) if w.title and not w.title.isspace()]
         if not windows:
             print(f"[✗] 找不到任何包含「{keyword}」的視窗")
@@ -101,15 +87,13 @@ if __name__ == "__main__":
                             else:
                                 print(f"        ↪ 血條顏色異常！")
                                 need_press_h = True
-                                break # 只要發現一個血條異常，就立即準備補血，無需檢查其他角色
                         else:
                             print(f"    [角色{idx+1}] 座標超出視窗範圍")
 
                     if need_press_h:
-                        print(f"    ↪ 視窗 '{win.title}' 偵測到血條異常，準備執行補血動作...")
-                        if send_key_h(win):
-                            print(f"    ↪ 視窗 '{win.title}' 已執行補血動作，跳過此視窗，檢查下一個。")
-                            continue # **關鍵修改：執行補血後立即跳到下一個視窗**
+                        send_key_h(win)
+                        running = False  # 停止外層 while 迴圈
+                        break  # 跳出 for 迴圈
                     else:
                         print("    ↪ 所有血條顏色正常，無需按鍵")
 
