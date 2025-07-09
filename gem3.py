@@ -25,12 +25,10 @@ DELAY_AFTER_WINDOW_ACTIVATION = 0.5 # 激活視窗後等待時間 (秒)
 DELAY_AFTER_MOUSE_MOVE = 0.1       # 滑鼠移動後等待時間 (秒)
 DELAY_AFTER_CLICK = 0.2            # 點擊後等待時間 (秒)
 DELAY_AFTER_KEY_PRESS = 0.2        # 按鍵後等待時間 (秒)
-DELAY_MAIN_LOOP = 0.5              # 主迴圈每次檢查的間隔時間 (秒)
+DELAY_MAIN_LOOP = 0.5              # 主迴圈每次檢查所有視窗後的間隔時間 (秒)
 # --------------------
 
-# 用於儲存已經處理過（按過 H 鍵）的視窗句柄 (HWND)
-# 使用視窗句柄來確保唯一性，即使視窗標題重複也能正確區分
-processed_windows_handles = set()
+# 不再需要 processed_windows_handles 集合，因為我們要輪流檢查所有視窗
 
 def is_color_close(c1, c2, tolerance):
     """判斷兩色是否在容差範圍內"""
@@ -40,6 +38,7 @@ def send_key_h(win):
     """模擬點擊視窗中心並發送 h 鍵，然後點擊指定位置"""
     try:
         # 確保視窗在前台，以便接收輸入
+        # 這裡的 activate() 是為了確保在執行操作時，該視窗是活躍的
         win.activate()
         time.sleep(DELAY_AFTER_WINDOW_ACTIVATION) # 使用自定義延遲
 
@@ -69,8 +68,6 @@ def send_key_h(win):
 
 if __name__ == "__main__":
     # 設定 pydirectinput 的預設延遲和故障保護
-    # pydirectinput.PAUSE 會影響所有 pydirectinput 操作間的預設延遲
-    # 這裡可以根據需要調整或保持預設
     pydirectinput.PAUSE = 0.05
     pydirectinput.FAILSAFE = True
 
@@ -90,22 +87,27 @@ if __name__ == "__main__":
             time.sleep(DELAY_MAIN_LOOP) # 使用自定義延遲
             continue
 
-        for i, win in enumerate(windows[:3]):  # 最多處理 3 個視窗
-            # 檢查該視窗是否已經被處理過 (使用視窗句柄)
-            if win._hWnd in processed_windows_handles:
-                print(f"\n[→] 視窗 {i+1}：{win.title} (句柄: {win._hWnd}) 已處理過，跳過。")
-                continue # 跳過此視窗，檢查下一個
-
+        # 遍歷所有找到的視窗，輪流激活並檢查
+        for i, win in enumerate(windows): # 不再限制只處理前3個，而是所有找到的視窗
             try:
                 print(f"\n[→] 處理視窗 {i+1}：{win.title} (句柄: {win._hWnd})")
 
+                # 確保視窗不是最小化，並將其還原
                 if win.isMinimized:
                     print("      ↪ 還原最小化視窗...")
                     win.restore()
                     time.sleep(DELAY_AFTER_WINDOW_ACTIVATION) # 使用自定義延遲
 
-                print("      ↪ 等待視窗穩定...")
-                time.sleep(1) # 此處延遲暫時保持固定，確保截圖穩定
+                # 激活視窗，確保它在前景，這樣才能被正確截圖
+                # 即使它不是最小化，也需要確保它被激活到最前面
+                if not win.isActive:
+                    print("      ↪ 激活視窗到前景...")
+                    win.activate()
+                    time.sleep(DELAY_AFTER_WINDOW_ACTIVATION) # 使用自定義延遲
+
+                # 額外等待，確保視窗內容穩定渲染
+                print("      ↪ 等待視窗內容穩定...")
+                time.sleep(1) # 此處延遲暫時保持固定，確保截圖穩定性
 
                 bbox_win = {
                     "top": win.top,
@@ -140,9 +142,8 @@ if __name__ == "__main__":
 
                     if need_press_h:
                         send_key_h(win)
-                        # 如果執行了補血操作，將此視窗句柄加入已處理集合
-                        processed_windows_handles.add(win._hWnd)
-                        print(f"      ↪ 視窗 '{win.title}' (句柄: {win._hWnd}) 已加入已處理列表，將不再監控。")
+                        # 這裡不再將視窗加入任何「已處理」列表，因為我們希望它在下一個迴圈中再次被檢查
+                        print(f"      ↪ 視窗 '{win.title}' (句柄: {win._hWnd}) 已執行補血操作。")
                     else:
                         print("      ↪ 所有血條顏色正常，無需按鍵")
 
@@ -151,4 +152,6 @@ if __name__ == "__main__":
                 print("      → 詳細錯誤堆疊：")
                 traceback.print_exc()
 
-        time.sleep(DELAY_MAIN_LOOP) # 使用自定義延遲
+        # 在檢查完所有視窗後，等待一段時間再重新開始下一輪檢查
+        print(f"\n[✓] 完成一輪所有視窗檢查，等待 {DELAY_MAIN_LOOP} 秒後重新開始...")
+        time.sleep(DELAY_MAIN_LOOP)
