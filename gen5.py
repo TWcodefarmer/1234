@@ -55,14 +55,14 @@ def send_key_h(win):
         return False # 表示執行失敗
 
 if __name__ == "__main__":
-    while True: # Keep this loop running indefinitely
+    while True:
         windows = [w for w in gw.getWindowsWithTitle(keyword) if w.title and not w.title.isspace()]
         if not windows:
             print(f"[✗] 找不到任何包含「{keyword}」的視窗")
             time.sleep(1)
             continue
 
-        for i, win in enumerate(windows[:3]):  # Process up to 3 windows
+        for i, win in enumerate(windows[:3]):  # 最多處理 3 個視窗
             try:
                 print(f"\n[→] 處理視窗 {i+1}：{win.title}")
 
@@ -102,6 +102,7 @@ if __name__ == "__main__":
                                 print(f"        ↪ 血條顏色異常！")
                                 need_press_h = True
                                 # Once one character's HP is low, we break and trigger 'H'
+                                # This ensures we don't waste time checking other characters in the same window
                                 break
                         else:
                             print(f"    [角色{idx+1}] 座標超出視窗範圍")
@@ -111,11 +112,10 @@ if __name__ == "__main__":
 
                     if need_press_h:
                         print(f"    ↪ 視窗 '{win.title}' 偵測到血條異常，準備執行補血動作...")
-                        if send_key_h(win):
+                        if send_key_h(win): # Call send_key_h and check if it was successful
                             print(f"    ↪ 視窗 '{win.title}' 已執行補血動作，跳過此視窗，檢查下一個。")
-                            # This `continue` breaks out of the current `for win in windows` iteration
-                            # and moves to the next window immediately.
-                            continue
+                            # **關鍵修改：執行補血後立即跳到下一個視窗**
+                            continue # This will immediately move to the next 'win' in the 'for' loop
                     else:
                         print("    ↪ 所有血條顏色正常，無需按鍵")
 
@@ -124,4 +124,4 @@ if __name__ == "__main__":
                 print("    → 詳細錯誤堆疊：")
                 traceback.print_exc()
 
-        time.sleep(0.5)  # Control CPU usage
+        time.sleep(0.5)  # 控制 CPU 使用率
