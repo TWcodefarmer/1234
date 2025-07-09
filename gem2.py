@@ -4,7 +4,7 @@ from PIL import Image
 import datetime
 import time
 import traceback
-import pydirectinput # 將 pyautogui 替換為 pydirectinput
+import pydirectinput
 import keyboard
 
 # ========== 設定 ==========
@@ -28,28 +28,30 @@ def send_key_h(win):
     """激活視窗 + 點擊 + 補血動作，加上適當延遲"""
     try:
         # 1. 激活視窗（讓它前景）
-        # pydirectinput.press() 和 pydirectinput.click() 在非活動視窗可能無效，
-        # 因此 win.activate() 仍然是必要的。
         win.activate()
         time.sleep(0.5)  # 等待視窗跳出來
 
         # 2. 滑鼠移動 + 點擊視窗中心
         center_x = win.left + win.width // 2
         center_y = win.top + win.height // 2
-        pydirectinput.moveTo(center_x, center_y)
+        pydirectinput.moveTo(center_x, center_y) # 移動到中心
         time.sleep(0.2)
-        pydirectinput.click()  # ✅ 替換為 pydirectinput.click()
-        print(f"      ↪ 點擊視窗中心 ({center_x}, {center_y})")
+        pydirectinput.click()  # ✅ 在中心點擊
+        print(f"      ↪ 移動至視窗中心 ({center_x}, {center_y}) 並點擊")
         time.sleep(0.5)
 
-        # 3. 點擊補品或 UI 上某個固定點
-        pydirectinput.click(150, 80) # 替換為 pydirectinput.click()
-        print("      ↪ 點擊 (150, 80)")
+        # 3. 移動並點擊補品或 UI 上某個固定點
+        pydirectinput.moveTo(150, 80) # 移動到 (150, 80)
+        time.sleep(0.2)
+        pydirectinput.click() # 在 (150, 80) 點擊
+        print("      ↪ 移動至 (150, 80) 並點擊")
         time.sleep(0.5)
 
-        # 4. 點擊主要位置（如補品鍵）
-        pydirectinput.click(1111, 750) # 替換為 pydirectinput.click()
-        print("      ↪ 點擊 (1111, 750)")
+        # 4. 移動並點擊主要位置（如補品鍵）
+        pydirectinput.moveTo(1111, 750) # 移動到 (1111, 750)
+        time.sleep(0.2)
+        pydirectinput.click() # 在 (1111, 750) 點擊
+        print("      ↪ 移動至 (1111, 750) 並點擊")
         time.sleep(0.5)
 
     except Exception as e:
